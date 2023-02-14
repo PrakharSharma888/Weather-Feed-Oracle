@@ -1,131 +1,30 @@
 const { Contract, ethers } = require('ethers');
 const axios = require('axios');
+const { userAbi, oracleAbi } = require("../constrants/index.js")
 
 async function getWeatherData(){
 
-    const ContractAddress = "0x998abeb3E57409262aE5b751f60747921B33613E"
-
-    const abi = [
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "string",
-              "name": "_location",
-              "type": "string"
-            }
-          ],
-          "name": "weather",
-          "type": "event"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "_location",
-              "type": "string"
-            }
-          ],
-          "name": "getWeather",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "_location",
-              "type": "string"
-            }
-          ],
-          "name": "requestWeather",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "_location",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "_temperature",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "_description",
-              "type": "string"
-            }
-          ],
-          "name": "updateWeather",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "name": "weatherData",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "temperature",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        }
-      ]
+    const userContractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
+    const oracleContractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
 
     const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8545/');
     const signer = provider.getSigner()
-    const contract = new Contract(ContractAddress, abi, signer)
+    const userContract = new Contract(userContractAddress, userAbi, signer)
+    const oracleContract = new Contract(oracleContractAddress, oracleAbi, signer)
 
-    const getData = await contract.requestWeather("mumbai")
-    const getDataRecipt = await getData.wait()
+    const weatherRequest = await userContract.requestWeatherData("mumbai",{value:ethers.utils.parseEther("2"), gasLimit : 300000})
+    const data = await userContract.getData()
 
-    const location = getDataRecipt.events[0].args._location;
+    const location = data;
+    console.log(location)
+    // const location = getDataRecipt.events[0].args._location;
     // console.log(location)
 
-    var [temp, des ] = await getWeatherDataOffChain(location)
+    var [temp, des] = await getWeatherDataOffChain(location)
     temp = temp.toString()
     // console.log(temp, des)
-    const updateData = await contract.updateWeather(location, temp, des)
-    const finalData = await contract.getWeather(location)
+    const updateData = await oracleContract.updateWeather(location, temp, des)
+    const finalData = await userContract.retreiveWeather(location)
     console.log(finalData)
 
 
