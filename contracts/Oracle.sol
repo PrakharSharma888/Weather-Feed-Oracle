@@ -9,13 +9,9 @@ contract Oracle is Ownable {
         string description;
     }
 
-    modifier onlyPayer{
-        require(tx.origin == payer, "Not the payer!");
-        _;
-    }
+    mapping(address => mapping(string => bool)) public isPayer;
 
     event weather(string _location);
-    address public payer;
 
     mapping (string => WeatherData) public weatherData;
 
@@ -24,18 +20,16 @@ contract Oracle is Ownable {
         weatherData[_location].description = _description;
     }
 
-    function requestWeather(string memory _location) public onlyPayer returns(string memory) {
+    function requestWeather(string memory _location) payable public returns(string memory) {
+        if(!isPayer[tx.origin][_location]){
+            require(msg.value >= 1 ether,"oracle : not a payer");
+            isPayer[tx.origin][_location] = true;
+        }
         emit weather(_location);
         return "Successfully requested Weather details for Your location!";
     }
 
-    function payForWeatherData() public payable returns(bool){
-        require(msg.value >= 1 ether, "Payment must be at least 1 ether");
-        payer = payable(tx.origin);
-        return true;
-    }
-
-    function getWeather(string memory _location) public onlyPayer view returns(string memory, string memory){
+    function getWeather(string memory _location) public view returns(string memory, string memory){
         WeatherData memory currentWeather = weatherData[_location];
         return (currentWeather.temperature, currentWeather.description);
     }

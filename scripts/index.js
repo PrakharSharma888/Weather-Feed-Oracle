@@ -1,34 +1,40 @@
-const { Contract, ethers } = require('ethers');
+
+const ethers = require('ethers');
 const axios = require('axios');
-const { userAbi, oracleAbi } = require("../constrants/index.js")
 
-async function getWeatherData(){
-
-    const userContractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
-    const oracleContractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-
-    const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8545/');
-    const signer = provider.getSigner()
-    const userContract = new Contract(userContractAddress, userAbi, signer)
-    const oracleContract = new Contract(oracleContractAddress, oracleAbi, signer)
-
-    const weatherRequest = await userContract.requestWeatherData("mumbai",{value:ethers.utils.parseEther("2"), gasLimit : 300000})
-    const data = await userContract.getData()
-
-    const location = data;
-    console.log(location)
-    // const location = getDataRecipt.events[0].args._location;
-    // console.log(location)
-
-    var [temp, des] = await getWeatherDataOffChain(location)
-    temp = temp.toString()
-    // console.log(temp, des)
-    const updateData = await oracleContract.updateWeather(location, temp, des)
-    const finalData = await userContract.retreiveWeather(location)
-    console.log(finalData)
+const { abi } = require('../constrants/index.js');
+const provider = new ethers.providers.JsonRpcProvider(
+  'https://api.baobab.klaytn.net:8651/'
+);
+const contractAddress = '0x7F9900Bba36636fcc462944a6e9B3848FD012a10';
+const privateKey =
+  '884ae64d8fc43f49a0c9fbce02f9eabdabfe21cdbe8e9cddb018d2d8016076d0';
+const wallet = new ethers.Wallet(privateKey, provider);
+const contract = new ethers.Contract(contractAddress, abi, wallet);
 
 
-}
+
+const oracleFunction = async () => {
+ contract.on('weather', async (_loaction) => {
+    console.log('--details--', _loaction);
+    const location = _loaction;
+    console.log(location);
+      try {
+        [temp,des] = await getWeatherDataOffChain(location)
+        console.log(temp, des);
+        temp = temp.toString()
+      } catch (e) {
+        console.error(e);
+    }
+
+    const updateData = await contract.updateWeather(location, temp, des)
+    console.log(updateData);
+
+  });
+
+};
+console.log("Started");
+oracleFunction();
 
 async function getWeatherDataOffChain(location){
     try {
@@ -44,4 +50,3 @@ async function getWeatherDataOffChain(location){
         console.error(error);
       }
 }
-getWeatherData()
