@@ -12,7 +12,7 @@ const privateKey =
 const wallet = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
-
+done
 
 const oracleFunction = async () => {
  contract.on('weather', async (_loaction) => {
