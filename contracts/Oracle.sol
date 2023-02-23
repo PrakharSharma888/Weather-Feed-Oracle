@@ -31,6 +31,7 @@ contract Oracle is Ownable {
 
     function getWeather(string memory _location) public view returns(string memory, string memory){
         WeatherData memory currentWeather = weatherData[_location];
+        require(bytes(currentWeather.temperature).length != 0 && bytes(currentWeather.description).length != 0, "Data not fetched yet");
         return (currentWeather.temperature, currentWeather.description);
     }
 }
